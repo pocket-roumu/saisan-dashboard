@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>採算管理ダッシュボード</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: 'Hiragino Kaku Gothic Pro', 'Yu Gothic', sans-serif;
+    background: #0f1117;
+    color: #e8eaf0;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    border-bottom: 1px solid #2a2d3a;
+    padding-bottom: 16px;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: #fff;
+  }
+
+  .token-input {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  input[type="text"], input[type="number"], select {
+    background: #1e2130;
+    border: 1px solid #2a2d3a;
+    color: #e8eaf0;
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+  }
+
+  input[type="text"]:focus, select:focus {
+    border-color: #4f6ef7;
+  }
+
+  button {
+    background: #4f6ef7;
+    color: #fff;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  button:hover { background: #3d5ce5; }
+  button:disabled { background: #2a2d3a; cursor: not-allowed; }
+
+  .filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-label {
+    font-size: 12px;
+    color: #6b7280;
+    margin-right: -4px;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: #1e2130;
+    border: 1px solid #2a2d3a;
+    border-radius: 10px;
+    padding: 16px 20px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: #6b7280;
+    margin-bottom: 6px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .stat-value.positive { color: #34d399; }
+  .stat-value.negative { color: #f87171; }
+
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .chart-card {
+    background: #1e2130;
+    border: 1px solid #2a2d3a;
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #9ca3af;
+    margin-bottom: 16px;
+  }
+
+  canvas { max-height: 220px; }
+
+  .table-card {
+    background: #1e2130;
+    border: 1px solid #2a2d3a;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #2a2d3a;
+  }
+
+  .table-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #9ca3af;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    padding: 10px 16px;
+    text-align: right;
+    font-weight: 500;
+    color: #6b7280;
+    font-size: 11px;
+    background: #161824;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  th:first-child { text-align: left; }
+  th:hover { color: #9ca3af; }
+
+  td {
+    padding: 11px 16px;
+    text-align: right;
+    border-top: 1px solid #1a1d28;
+    color: #d1d5db;
+  }
+
+  td:first-child { text-align: left; color: #fff; font-weight: 500; }
+
+  tr:hover td { background: #252838; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge.positive { background: #064e3b; color: #34d399; }
+  .badge.negative { background: #450a0a; color: #f87171; }
+  .badge.neutral  { background: #1f2937; color: #9ca3af; }
+
+  .profit-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .bar-bg {
+    width: 60px;
+    height: 4px;
+    background: #2a2d3a;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 48px;
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  .error {
+    background: #450a0a;
+    border: 1px solid #7f1d1d;
+    color: #fca5a5;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .setup-screen {
+    max-width: 480px;
+    margin: 80px auto;
+    text-align: center;
+  }
+
+  .setup-screen h2 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+
+  .setup-screen p {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 24px;
+  }
+
+  .setup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+  }
+
+  .setup-form label {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-bottom: 2px;
+    display: block;
+  }
+
+  .setup-form input {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .sort-indicator { margin-left: 4px; }
+</style>
+</head>
+<body>
+
+<div id="setup-screen" class="setup-screen">
+  <h2>採算管理ダッシュボード</h2>
+  <p>Notion APIトークンと報酬DBのIDを入力してください</p>
+  <div class="setup-form">
+    <div>
+      <label>Notion APIトークン</label>
+      <input type="text" id="token-input" placeholder="secret_..." />
+    </div>
+    <div>
+      <label>報酬DB ID</label>
+      <input type="text" id="db-input" placeholder="b22821a235f34ed8b6364d3f5b80b8cc" value="b22821a235f34ed8b6364d3f5b80b8cc" />
+    </div>
+    <button onclick="initDashboard()">接続する</button>
+  </div>
+</div>
+
+<div id="dashboard" style="display:none">
+  <header>
+    <h1>📊 採算管理</h1>
+    <div class="token-input">
+      <button onclick="loadData()" id="refresh-btn">更新</button>
+      <button onclick="logout()" style="background:#2a2d3a">切替</button>
+    </div>
+  </header>
+
+  <div id="error-msg" style="display:none" class="error"></div>
+
+  <div class="filters">
+    <span class="filter-label">申告月</span>
+    <select id="filter-month" onchange="applyFilters()">
+      <option value="">すべて</option>
+      <option value="1">1月</option><option value="2">2月</option>
+      <option value="3">3月</option><option value="4">4月</option>
+      <option value="5">5月</option><option value="6">6月</option>
+      <option value="7">7月</option><option value="8">8月</option>
+      <option value="9">9月</option><option value="10">10月</option>
+      <option value="11">11月</option><option value="12">12月</option>
+    </select>
+    <span class="filter-label">表示</span>
+    <select id="filter-type" onchange="applyFilters()">
+      <option value="">全顧客</option>
+      <option value="赤字">赤字のみ</option>
+      <option value="黒字">黒字のみ</option>
+    </select>
+    <span class="filter-label">並び替え</span>
+    <select id="sort-key" onchange="applyFilters()">
+      <option value="損益">損益（昇順）</option>
+      <option value="利益率">利益率（昇順）</option>
+      <option value="報酬合計">報酬合計（降順）</option>
+    </select>
+  </div>
+
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card"><div class="stat-label">対象顧客数</div><div class="stat-value" id="stat-count">—</div></div>
+    <div class="stat-card"><div class="stat-label">報酬合計</div><div class="stat-value" id="stat-revenue">—</div></div>
+    <div class="stat-card"><div class="stat-label">人件費合計</div><div class="stat-value" id="stat-cost">—</div></div>
+    <div class="stat-card"><div class="stat-label">損益合計</div><div class="stat-value" id="stat-profit">—</div></div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">顧客別 損益</div>
+      <canvas id="chart-profit"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">利益率 分布</div>
+      <canvas id="chart-rate"></canvas>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <span class="table-title">採算一覧</span>
+      <span style="font-size:12px;color:#6b7280" id="filtered-count"></span>
+    </div>
+    <div id="table-container"><div class="loading">読み込み中...</div></div>
+  </div>
+</div>
+
+<script>
+let allData = [];
+let profitChart = null;
+let rateChart = null;
+let NOTION_TOKEN = '';
+let DB_ID = '';
+
+function initDashboard() {
+  NOTION_TOKEN = document.getElementById('token-input').value.trim();
+  DB_ID = document.getElementById('db-input').value.trim();
+  if (!NOTION_TOKEN) { alert('トークンを入力してください'); return; }
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadData();
+}
+
+function logout() {
+  document.getElementById('setup-screen').style.display = 'block';
+  document.getElementById('dashboard').style.display = 'none';
+}
+
+async function loadData() {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.textContent = '取得中...';
+  document.getElementById('error-msg').style.display = 'none';
+
+  try {
+    const rows = [];
+    let cursor = null;
+    do {
+      const body = { page_size: 100 };
+      if (cursor) body.start_cursor = cursor;
+      const res = await fetch(`https://api.notion.com/v1/databases/${DB_ID}/query`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${NOTION_TOKEN}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'API エラー');
+      }
+      const data = await res.json();
+      rows.push(...data.results);
+      cursor = data.has_more ? data.next_cursor : null;
+    } while (cursor);
+
+    allData = rows.map(page => {
+      const p = page.properties;
+      const get = (key, type) => {
+        const v = p[key];
+        if (!v) return null;
+        if (type === 'number') return v.number ?? null;
+        if (type === 'formula_number') return v.formula?.number ?? null;
+        if (type === 'rollup_number') return v.rollup?.number ?? null;
+        if (type === 'rollup_array') return v.rollup?.array ?? [];
+        if (type === 'title') return v.title?.[0]?.plain_text ?? '';
+        return null;
+      };
+
+      const 月額 = get('月額報酬', 'number') ?? 0;
+      const 決算 = get('決算時報酬', 'number') ?? 0;
+      const 確定 = get('確定申告報酬', 'number') ?? 0;
+      const R7確定 = get('R7確定申告報酬', 'number') ?? 0;
+      const その他 = get('その他報酬', 'number') ?? 0;
+      const 報酬合計 = 月額 * 12 + 決算 + 確定 + R7確定 + その他;
+      const 工数合計 = get('工数合計', 'rollup_number') ?? 0;
+      const 人件費 = 工数合計 * 10000;
+      const 損益 = 報酬合計 - 人件費;
+      const 利益率 = 報酬合計 > 0 ? Math.round(損益 / 報酬合計 * 100) : 0;
+
+      // 申告月（ロールアップ配列から取得）
+      const 申告月array = get('申告月', 'rollup_array');
+      const 申告月 = 申告月array.length > 0 ? (申告月array[0].formula?.number ?? null) : null;
+
+      return {
+        name: get('顧客名', 'title'),
+        報酬合計, 工数合計, 人件費, 損益, 利益率, 申告月
+      };
+    }).filter(d => d.name && d.報酬合計 > 0);
+
+    applyFilters();
+  } catch(e) {
+    const el = document.getElementById('error-msg');
+    el.textContent = 'エラー: ' + e.message;
+    el.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '更新';
+  }
+}
+
+function applyFilters() {
+  const month = document.getElementById('filter-month').value;
+  const type = document.getElementById('filter-type').value;
+  const sortKey = document.getElementById('sort-key').value;
+
+  let filtered = [...allData];
+  if (month) filtered = filtered.filter(d => d.申告月 == month);
+  if (type === '赤字') filtered = filtered.filter(d => d.損益 < 0);
+  if (type === '黒字') filtered = filtered.filter(d => d.損益 >= 0);
+
+  if (sortKey === '損益') filtered.sort((a,b) => a.損益 - b.損益);
+  else if (sortKey === '利益率') filtered.sort((a,b) => a.利益率 - b.利益率);
+  else if (sortKey === '報酬合計') filtered.sort((a,b) => b.報酬合計 - a.報酬合計);
+
+  renderStats(filtered);
+  renderCharts(filtered);
+  renderTable(filtered);
+}
+
+function fmt(n) {
+  return n == null ? '—' : '¥' + Math.round(n).toLocaleString();
+}
+
+function renderStats(data) {
+  const count = data.length;
+  const rev = data.reduce((s,d) => s + d.報酬合計, 0);
+  const cost = data.reduce((s,d) => s + d.人件費, 0);
+  const profit = data.reduce((s,d) => s + d.損益, 0);
+
+  document.getElementById('stat-count').textContent = count + '社';
+  document.getElementById('stat-revenue').textContent = fmt(rev);
+  document.getElementById('stat-cost').textContent = fmt(cost);
+  const pel = document.getElementById('stat-profit');
+  pel.textContent = fmt(profit);
+  pel.className = 'stat-value ' + (profit >= 0 ? 'positive' : 'negative');
+}
+
+function renderCharts(data) {
+  const top = data.slice(0, 20);
+  const labels = top.map(d => d.name.length > 10 ? d.name.slice(0,10)+'…' : d.name);
+  const profits = top.map(d => d.損益);
+  const colors = profits.map(v => v >= 0 ? 'rgba(52,211,153,0.8)' : 'rgba(248,113,113,0.8)');
+
+  if (profitChart) profitChart.destroy();
+  profitChart = new Chart(document.getElementById('chart-profit'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: profits, backgroundColor: colors, borderRadius: 3 }] },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#6b7280', font: { size: 11 }, callback: v => '¥'+v.toLocaleString() }, grid: { color: '#1e2130' } },
+        y: { ticks: { color: '#9ca3af', font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // 利益率分布（ドーナツ）
+  const ranges = { '100%〜': 0, '80-99%': 0, '50-79%': 0, '0-49%': 0, '赤字': 0 };
+  data.forEach(d => {
+    if (d.利益率 >= 100) ranges['100%〜']++;
+    else if (d.利益率 >= 80) ranges['80-99%']++;
+    else if (d.利益率 >= 50) ranges['50-79%']++;
+    else if (d.利益率 >= 0) ranges['0-49%']++;
+    else ranges['赤字']++;
+  });
+
+  if (rateChart) rateChart.destroy();
+  rateChart = new Chart(document.getElementById('chart-rate'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(ranges),
+      datasets: [{ data: Object.values(ranges), backgroundColor: ['#34d399','#6ee7b7','#fcd34d','#fb923c','#f87171'], borderWidth: 0 }]
+    },
+    options: {
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 11 }, boxWidth: 10 } }
+      }
+    }
+  });
+}
+
+function renderTable(data) {
+  document.getElementById('filtered-count').textContent = data.length + '件';
+  if (data.length === 0) {
+    document.getElementById('table-container').innerHTML = '<div class="loading">該当なし</div>';
+    return;
+  }
+  const maxProfit = Math.max(...data.map(d => Math.abs(d.損益)));
+  const html = `
+    <table>
+      <thead>
+        <tr>
+          <th>顧客名</th>
+          <th>申告月</th>
+          <th>報酬合計</th>
+          <th>工数(h)</th>
+          <th>人件費</th>
+          <th>損益</th>
+          <th>利益率</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map(d => {
+          const pct = maxProfit > 0 ? Math.abs(d.損益) / maxProfit * 60 : 0;
+          const color = d.損益 >= 0 ? '#34d399' : '#f87171';
+          const badge = d.利益率 >= 80 ? 'positive' : d.利益率 >= 0 ? 'neutral' : 'negative';
+          return `<tr>
+            <td>${d.name}</td>
+            <td>${d.申告月 ? d.申告月 + '月' : '—'}</td>
+            <td>${fmt(d.報酬合計)}</td>
+            <td>${d.工数合計.toFixed(1)}</td>
+            <td>${fmt(d.人件費)}</td>
+            <td>
+              <div class="profit-bar">
+                <div class="bar-bg"><div class="bar-fill" style="width:${pct}px;background:${color}"></div></div>
+                <span style="color:${color};font-weight:600">${fmt(d.損益)}</span>
+              </div>
+            </td>
+            <td><span class="badge ${badge}">${d.利益率}%</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+  document.getElementById('table-container').innerHTML = html;
+}
+</script>
+</body>
+</html>
