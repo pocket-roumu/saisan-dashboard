@@ -3,291 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>採算管理 | 新宿パートナーズ</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<title>工数管理 | 新宿パートナーズ</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'Hiragino Kaku Gothic Pro', 'Yu Gothic', sans-serif;
-  background: #f5f5f5;
-  color: #333;
-  font-size: 13px;
-}
-
-.header {
-  background: #fff;
-  border-bottom: 1px solid #ddd;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  height: 40px;
-  gap: 16px;
-}
-
-.header-tabs {
-  display: flex;
-  gap: 0;
-}
-
-.tab {
-  padding: 0 16px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  color: #666;
-  font-size: 13px;
-  gap: 6px;
-}
-
-.tab.active {
-  border-bottom-color: #1a73e8;
-  color: #1a73e8;
-}
-
+body { font-family: 'Hiragino Kaku Gothic Pro', 'Yu Gothic', sans-serif; background: #f5f5f5; color: #333; font-size: 13px; }
+.header { background: #fff; border-bottom: 1px solid #ddd; padding: 0 16px; display: flex; align-items: center; height: 40px; gap: 16px; }
+.tab { padding: 0 16px; height: 40px; display: flex; align-items: center; cursor: pointer; border-bottom: 2px solid transparent; color: #666; font-size: 13px; }
+.tab.active { border-bottom-color: #1a73e8; color: #1a73e8; }
 .tab:hover { background: #f8f8f8; }
-
-.header-right {
-  margin-left: auto;
-  font-size: 12px;
-  color: #666;
-}
-
-.layout {
-  display: flex;
-  height: calc(100vh - 40px);
-}
-
-.sidebar {
-  width: 200px;
-  min-width: 200px;
-  background: #fff;
-  border-right: 1px solid #ddd;
-  padding: 16px 12px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.sidebar-section label {
-  display: block;
-  font-size: 11px;
-  color: #666;
-  margin-bottom: 4px;
-  font-weight: 600;
-}
-
-.radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.radio-group label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #333;
-  font-weight: normal;
-  cursor: pointer;
-}
-
-.date-range {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-}
-
-.date-range input {
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  padding: 3px 6px;
-  font-size: 11px;
-  width: 80px;
-}
-
-select {
-  width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  padding: 4px 6px;
-  font-size: 12px;
-  background: #fff;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #333;
-  cursor: pointer;
-  margin-top: 2px;
-}
-
-input[type="text"] {
-  width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  padding: 4px 6px;
-  font-size: 12px;
-}
-
-.btn-calc {
-  background: #1a73e8;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 8px;
-  width: 100%;
-  font-size: 13px;
-  cursor: pointer;
-  margin-top: 4px;
-}
-
+.layout { display: flex; height: calc(100vh - 40px); }
+.sidebar { width: 200px; min-width: 200px; background: #fff; border-right: 1px solid #ddd; padding: 16px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+.sidebar-section label { display: block; font-size: 11px; color: #666; margin-bottom: 4px; font-weight: 600; }
+.radio-group { display: flex; flex-direction: column; gap: 4px; }
+.radio-group label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #333; font-weight: normal; cursor: pointer; }
+.date-range { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+.date-range input { border: 1px solid #ddd; border-radius: 3px; padding: 3px 6px; font-size: 11px; width: 80px; }
+select { width: 100%; border: 1px solid #ddd; border-radius: 3px; padding: 4px 6px; font-size: 12px; background: #fff; }
+.checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #333; cursor: pointer; margin-top: 2px; }
+input[type="text"] { width: 100%; border: 1px solid #ddd; border-radius: 3px; padding: 4px 6px; font-size: 12px; }
+.btn-calc { background: #1a73e8; color: #fff; border: none; border-radius: 4px; padding: 8px; width: 100%; font-size: 13px; cursor: pointer; margin-top: 4px; }
 .btn-calc:hover { background: #1557b0; }
 .btn-calc:disabled { background: #aaa; cursor: not-allowed; }
-
-.main {
-  flex: 1;
-  overflow: auto;
-  padding: 16px;
-}
-
-.period-title {
-  font-size: 14px;
-  font-weight: bold;
-  margin-bottom: 12px;
-  color: #333;
-}
-
-.table-container {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-th {
-  background: #f8f8f8;
-  padding: 8px 10px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-  border-right: 1px solid #eee;
-  font-weight: 600;
-  color: #555;
-  white-space: nowrap;
-  cursor: pointer;
-  user-select: none;
-}
-
-th:hover { background: #f0f0f0; }
+.main { flex: 1; overflow: auto; padding: 16px; }
+.period-title { font-size: 14px; font-weight: bold; margin-bottom: 12px; color: #333; }
+.table-container { background: #fff; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { background: #f8f8f8; padding: 8px 10px; text-align: left; border-bottom: 1px solid #ddd; border-right: 1px solid #eee; font-weight: 600; color: #555; white-space: nowrap; cursor: pointer; user-select: none; }
 th.num { text-align: right; }
-
-td {
-  padding: 7px 10px;
-  border-bottom: 1px solid #f0f0f0;
-  border-right: 1px solid #f5f5f5;
-  white-space: nowrap;
-}
-
+td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; border-right: 1px solid #f5f5f5; white-space: nowrap; }
 td.num { text-align: right; }
 td.name { color: #1a73e8; cursor: pointer; }
 td.name:hover { text-decoration: underline; }
-
 tr:hover td { background: #f8f9ff; }
-
-tr.total-row td {
-  background: #f8f8f8;
-  font-weight: bold;
-  border-top: 2px solid #ddd;
-}
-
+tr.total-row td { background: #f8f8f8; font-weight: bold; border-top: 2px solid #ddd; }
 .loss { color: #d93025; font-weight: bold; }
-.profit { color: #333; }
-
-.bar-cell {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  justify-content: flex-end;
-}
-
-.bar-wrap {
-  width: 50px;
-  height: 8px;
-  background: #eee;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  border-radius: 2px;
-}
-
+.bar-cell { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+.bar-wrap { width: 50px; height: 8px; background: #eee; border-radius: 2px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 2px; }
 .bar-fill.positive { background: #1a73e8; }
 .bar-fill.negative { background: #d93025; }
-
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  padding: 8px 10px;
-  background: #f8f8f8;
-  border-top: 1px solid #ddd;
-  font-size: 12px;
-}
-
-.page-btn {
-  border: 1px solid #ddd;
-  background: #fff;
-  padding: 3px 8px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 11px;
-}
-
+.pagination { display: flex; align-items: center; justify-content: flex-end; gap: 4px; padding: 8px 10px; background: #f8f8f8; border-top: 1px solid #ddd; font-size: 12px; }
+.page-btn { border: 1px solid #ddd; background: #fff; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; }
 .page-btn:disabled { color: #aaa; cursor: not-allowed; }
 .page-btn:hover:not(:disabled) { background: #f0f0f0; }
+.loading { text-align: center; padding: 48px; color: #666; }
+.error-msg { background: #fce8e6; border: 1px solid #f28b82; color: #c5221f; padding: 10px 14px; border-radius: 4px; margin-bottom: 12px; font-size: 12px; }
 
-.loading {
-  text-align: center;
-  padding: 48px;
-  color: #666;
-}
+/* モーダル */
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: #fff; border-radius: 8px; padding: 24px; width: 700px; max-width: 90vw; max-height: 80vh; overflow-y: auto; position: relative; }
+.modal-title { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+.modal-subtitle { font-size: 12px; color: #666; margin-bottom: 16px; }
+.modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; }
+.modal-close:hover { color: #333; }
+.modal-section { margin-bottom: 20px; }
+.modal-section-title { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #eee; }
+.detail-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.detail-table th { background: #f8f8f8; padding: 6px 10px; text-align: right; font-weight: 600; color: #555; border-bottom: 1px solid #ddd; }
+.detail-table th:first-child { text-align: left; }
+.detail-table td { padding: 6px 10px; text-align: right; border-bottom: 1px solid #f0f0f0; }
+.detail-table td:first-child { text-align: left; }
+.detail-table tr:last-child td { font-weight: bold; background: #f8f8f8; border-top: 1px solid #ddd; }
 
-.error-msg {
-  background: #fce8e6;
-  border: 1px solid #f28b82;
-  color: #c5221f;
-  padding: 10px 14px;
-  border-radius: 4px;
-  margin-bottom: 12px;
-  font-size: 12px;
-}
+/* 業務分類チェックボックス */
+.checkbox-group { display: flex; flex-direction: column; gap: 3px; }
+.checkbox-group label { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #333; cursor: pointer; font-weight: normal; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="header-tabs">
+  <div style="display:flex;gap:0">
     <div class="tab active" onclick="switchTab('soneki')" id="tab-soneki">📊 損益分析</div>
     <div class="tab" onclick="switchTab('seisansei')" id="tab-seisansei">📈 生産性分析</div>
   </div>
-  <div class="header-right">報酬：報酬管理</div>
 </div>
 
 <div class="layout">
@@ -300,18 +90,27 @@ tr.total-row td {
         <label><input type="radio" name="period" value="custom" onchange="onPeriodChange()"> 期間指定</label>
       </div>
       <div class="date-range" id="custom-range" style="display:none;margin-top:6px">
-        <input type="month" id="date-from">〜
-        <input type="month" id="date-to">
+        <input type="month" id="date-from">〜<input type="month" id="date-to">
       </div>
     </div>
 
     <div class="sidebar-section">
-      <label>担当者</label>
-      <select id="filter-staff1"><option value="">すべて表示</option></select>
-      <select id="filter-staff2" style="margin-top:4px"><option value="">すべて表示</option></select>
-      <label class="checkbox-label" style="margin-top:4px">
-        <input type="checkbox" id="main-only"> 主担当先のみ
-      </label>
+      <label>業務分類</label>
+      <div class="checkbox-group" id="gyomu-checks">
+        <label><input type="checkbox" value="すべて" checked onchange="onGyomuAll(this)"> すべて</label>
+        <label><input type="checkbox" value="法人決算" onchange="onGyomuChange()"> 法人決算</label>
+        <label><input type="checkbox" value="年末調整" onchange="onGyomuChange()"> 年末調整</label>
+        <label><input type="checkbox" value="月次" onchange="onGyomuChange()"> 月次</label>
+        <label><input type="checkbox" value="源泉納付" onchange="onGyomuChange()"> 源泉納付</label>
+        <label><input type="checkbox" value="申告書作成" onchange="onGyomuChange()"> 申告書作成</label>
+        <label><input type="checkbox" value="給与計算" onchange="onGyomuChange()"> 給与計算</label>
+        <label><input type="checkbox" value="償却資産" onchange="onGyomuChange()"> 償却資産</label>
+        <label><input type="checkbox" value="法定調書" onchange="onGyomuChange()"> 法定調書</label>
+        <label><input type="checkbox" value="確定申告" onchange="onGyomuChange()"> 確定申告</label>
+        <label><input type="checkbox" value="ミーティング" onchange="onGyomuChange()"> ミーティング</label>
+        <label><input type="checkbox" value="社内作業" onchange="onGyomuChange()"> 社内作業</label>
+        <label><input type="checkbox" value="その他" onchange="onGyomuChange()"> その他</label>
+      </div>
     </div>
 
     <div class="sidebar-section">
@@ -335,7 +134,7 @@ tr.total-row td {
     <div class="sidebar-section">
       <label>オプション</label>
       <label class="checkbox-label">
-        <input type="checkbox" id="only-with-data"> 報酬または工数がある行のみ表示
+        <input type="checkbox" id="only-with-data"> 報酬または工数がある行のみ
       </label>
     </div>
 
@@ -345,7 +144,36 @@ tr.total-row td {
   <div class="main">
     <div id="error-area"></div>
     <div class="period-title" id="period-title"></div>
+    <div id="summary-cards" style="display:none;margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:16px">
+          <div style="font-size:11px;color:#666;margin-bottom:6px">工数合計</div>
+          <div style="font-size:22px;font-weight:700" id="sum-koshu">—</div>
+          <div style="font-size:11px;color:#666;margin-top:4px">h</div>
+        </div>
+        <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:16px">
+          <div style="font-size:11px;color:#666;margin-bottom:6px">時間単価（平均）</div>
+          <div style="font-size:22px;font-weight:700" id="sum-tanka">—</div>
+          <div style="font-size:11px;color:#666;margin-top:4px">円/h</div>
+        </div>
+        <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:16px">
+          <div style="font-size:11px;color:#666;margin-bottom:6px">損益合計</div>
+          <div style="font-size:22px;font-weight:700" id="sum-soneki">—</div>
+          <div style="font-size:11px;color:#666;margin-top:4px">円</div>
+        </div>
+      </div>
+    </div>
     <div id="content"><div class="loading">集計ボタンを押してください</div></div>
+  </div>
+</div>
+
+<!-- 詳細モーダル -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.remove('show')">✕</button>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-subtitle" id="modal-subtitle"></div>
+    <div id="modal-content"></div>
   </div>
 </div>
 
@@ -353,12 +181,13 @@ tr.total-row td {
 const PROXY = 'https://notion-proxy.s-partners.workers.dev';
 const HOSHU_DB = 'b22821a235f34ed8b6364d3f5b80b8cc';
 const NIPPO_DB = '93169cd0-31ce-4078-b427-66747ef76cb7';
-const KOKYAKU_DB = '46aa67c514ab47e79c7eec4af7fe0786';
 
 let currentTab = 'soneki';
 let allData = [];
+let nippoRaw = [];
 let currentPage = 1;
 const PAGE_SIZE = 20;
+const JIKEN_TANKA = 10000;
 
 function switchTab(tab) {
   currentTab = tab;
@@ -372,11 +201,26 @@ function onPeriodChange() {
   document.getElementById('custom-range').style.display = val === 'custom' ? 'flex' : 'none';
 }
 
+function onGyomuAll(cb) {
+  const checks = document.querySelectorAll('#gyomu-checks input[type=checkbox]:not([value=すべて])');
+  checks.forEach(c => c.checked = false);
+}
+
+function onGyomuChange() {
+  document.querySelector('#gyomu-checks input[value=すべて]').checked = false;
+}
+
+function getSelectedGyomu() {
+  const all = document.querySelector('#gyomu-checks input[value=すべて]').checked;
+  if (all) return null;
+  const checks = document.querySelectorAll('#gyomu-checks input[type=checkbox]:not([value=すべて]):checked');
+  return Array.from(checks).map(c => c.value);
+}
+
 function getDateRange() {
   const val = document.querySelector('input[name="period"]:checked').value;
   const now = new Date();
   let from, to;
-
   if (val === 'prev') {
     const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     from = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;
@@ -400,7 +244,7 @@ function getDateRange() {
 }
 
 function fmt(n) {
-  if (n == null || n === 0) return '';
+  if (!n) return '';
   return Math.round(n).toLocaleString();
 }
 
@@ -434,13 +278,12 @@ async function loadData() {
   document.getElementById('content').innerHTML = '<div class="loading">データ取得中...</div>';
 
   try {
-    // 期間タイトル
-    const fromLabel = range.from.slice(0, 7).replace('-', '年') + '月';
-    const toLabel = range.to.slice(0, 7).replace('-', '年') + '月';
+    const fromLabel = range.from.slice(0,7).replace('-','年') + '月';
+    const toLabel = range.to.slice(0,7).replace('-','年') + '月';
     document.getElementById('period-title').textContent = `${fromLabel}〜${toLabel}`;
 
-    // 日報データ取得（期間内）
-    const nippoRows = await notionQuery(NIPPO_DB, {
+    // 日報取得
+    nippoRaw = await notionQuery(NIPPO_DB, {
       filter: {
         and: [
           { property: '日付', date: { on_or_after: range.from } },
@@ -449,43 +292,44 @@ async function loadData() {
       }
     });
 
-    // 顧客別工数集計
-    const koshuMap = {};
-    nippoRows.forEach(page => {
+    // 顧客別・業務別工数集計
+    const koshuMap = {}; // { hoshuPageId: { total: n, byGyomu: { 法人決算: n, ... } } }
+    nippoRaw.forEach(page => {
       const rel = page.properties['顧客名']?.relation;
       const jikan = page.properties['時間']?.number ?? 0;
+      const gyomu = page.properties['作業種別']?.select?.name ?? 'その他';
       if (rel && rel.length > 0) {
         const id = rel[0].id;
-        koshuMap[id] = (koshuMap[id] || 0) + jikan;
+        if (!koshuMap[id]) koshuMap[id] = { total: 0, byGyomu: {} };
+        koshuMap[id].total += jikan;
+        koshuMap[id].byGyomu[gyomu] = (koshuMap[id].byGyomu[gyomu] || 0) + jikan;
       }
     });
 
-    // 報酬DBデータ取得
+    // 報酬DB取得
     const hoshuRows = await notionQuery(HOSHU_DB, {});
 
-    // データ合成
     allData = hoshuRows.map(page => {
       const p = page.properties;
       const name = p['顧客名']?.title?.[0]?.plain_text ?? '';
-      const code = p['顧客リレーション']?.relation?.[0]?.id ?? '';
       const 月額 = p['月額報酬']?.number ?? 0;
       const 決算 = p['決算時報酬']?.number ?? 0;
       const 確定 = p['R7確定申告報酬']?.number ?? 0;
       const その他 = p['その他報酬']?.number ?? 0;
       const 報酬合計 = 月額 * 12 + 決算 + 確定 + その他;
       const 申告月 = p['申告月']?.rollup?.array?.[0]?.formula?.number ?? null;
-      const 工数 = koshuMap[page.id] ?? 0;
-      const 時間単価 = 工数 > 0 ? Math.round(報酬合計 / 工数) : 0;
-      const 人件費 = 工数 * 10000;
+      const k = koshuMap[page.id] || { total: 0, byGyomu: {} };
+      const 工数 = k.total;
+      const byGyomu = k.byGyomu;
+      const 人件費 = 工数 * JIKEN_TANKA;
       const 損益 = 報酬合計 - 人件費;
       const 利益率 = 報酬合計 > 0 ? Math.round(損益 / 報酬合計 * 100 * 10) / 10 : 0;
-
-      return { name, code, 報酬合計, 申告月, 工数, 時間単価, 人件費, 損益, 利益率 };
+      const 時間単価 = 工数 > 0 ? Math.round(報酬合計 / 工数) : 0;
+      return { id: page.id, name, 報酬合計, 申告月, 工数, byGyomu, 人件費, 損益, 利益率, 時間単価 };
     }).filter(d => d.name);
 
     currentPage = 1;
     renderTable();
-
   } catch(e) {
     document.getElementById('error-area').innerHTML = `<div class="error-msg">エラー: ${e.message}</div>`;
     document.getElementById('content').innerHTML = '';
@@ -499,8 +343,31 @@ function getFiltered() {
   const keyword = document.getElementById('filter-keyword').value.toLowerCase();
   const month = document.getElementById('filter-month').value;
   const onlyData = document.getElementById('only-with-data').checked;
+  const gyomu = getSelectedGyomu();
 
-  return allData.filter(d => {
+  return allData.map(d => {
+    let 工数 = d.工数;
+    let byGyomu = d.byGyomu;
+
+    // 業務分類フィルタ（工数を絞る）
+    if (gyomu && gyomu.length > 0) {
+      byGyomu = {};
+      工数 = 0;
+      gyomu.forEach(g => {
+        if (d.byGyomu[g]) {
+          byGyomu[g] = d.byGyomu[g];
+          工数 += d.byGyomu[g];
+        }
+      });
+    }
+
+    const 人件費 = 工数 * JIKEN_TANKA;
+    const 損益 = d.報酬合計 - 人件費;
+    const 利益率 = d.報酬合計 > 0 ? Math.round(損益 / d.報酬合計 * 100 * 10) / 10 : 0;
+    const 時間単価 = 工数 > 0 ? Math.round(d.報酬合計 / 工数) : 0;
+
+    return { ...d, 工数, byGyomu, 人件費, 損益, 利益率, 時間単価 };
+  }).filter(d => {
     if (keyword && !d.name.toLowerCase().includes(keyword)) return false;
     if (month && d.申告月 != month) return false;
     if (onlyData && d.報酬合計 === 0 && d.工数 === 0) return false;
@@ -511,125 +378,107 @@ function getFiltered() {
 function renderTable() {
   const filtered = getFiltered();
   const total = filtered.length;
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
   const start = (currentPage - 1) * PAGE_SIZE;
   const page = filtered.slice(start, start + PAGE_SIZE);
 
-  // 合計
-  const sumHoshu = filtered.reduce((s, d) => s + d.報酬合計, 0);
-  const sumKoshu = filtered.reduce((s, d) => s + d.工数, 0);
-  const sumJinken = filtered.reduce((s, d) => s + d.人件費, 0);
-  const sumSoneki = filtered.reduce((s, d) => s + d.損益, 0);
+  const sumHoshu = filtered.reduce((s,d) => s + d.報酬合計, 0);
+  const sumKoshu = filtered.reduce((s,d) => s + d.工数, 0);
+  const sumJinken = filtered.reduce((s,d) => s + d.人件費, 0);
+  const sumSoneki = filtered.reduce((s,d) => s + d.損益, 0);
   const avgRieki = sumHoshu > 0 ? Math.round(sumSoneki / sumHoshu * 100 * 10) / 10 : 0;
   const avgJikan = sumKoshu > 0 ? Math.round(sumHoshu / sumKoshu) : 0;
 
-  const maxVal = Math.max(...filtered.map(d => Math.abs(currentTab === 'soneki' ? d.損益 : d.時間単価)));
+  const maxVal = Math.max(...filtered.map(d => Math.abs(currentTab === 'soneki' ? d.損益 : d.時間単価)), 1);
 
   let html = '';
 
   if (currentTab === 'soneki') {
-    html = `
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th style="width:70px">コード</th>
-            <th>顧客名</th>
-            <th class="num">報酬</th>
-            <th class="num">人件費</th>
-            <th class="num">損益</th>
-            <th class="num">利益率</th>
-            <th class="num" style="width:120px">損益グラフ</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${page.map(d => {
-            const pct = maxVal > 0 ? Math.abs(d.損益) / maxVal * 50 : 0;
-            const isLoss = d.損益 < 0;
-            return `<tr>
-              <td>${d.code || ''}</td>
-              <td class="name">${d.name}</td>
-              <td class="num">${fmt(d.報酬合計)}</td>
-              <td class="num">${fmt(d.人件費)}</td>
-              <td class="num ${isLoss ? 'loss' : ''}">${fmt(d.損益)}</td>
-              <td class="num">${d.利益率 ? d.利益率 + '%' : ''}</td>
-              <td>
-                <div class="bar-cell">
-                  <div class="bar-wrap">
-                    <div class="bar-fill ${isLoss ? 'negative' : 'positive'}" style="width:${pct}px"></div>
-                  </div>
-                </div>
-              </td>
-            </tr>`;
-          }).join('')}
-          <tr class="total-row">
-            <td colspan="2">総計</td>
-            <td class="num">${fmt(sumHoshu)}</td>
-            <td class="num">${fmt(sumJinken)}</td>
-            <td class="num ${sumSoneki < 0 ? 'loss' : ''}">${fmt(sumSoneki)}</td>
-            <td class="num">${avgRieki}%</td>
-            <td></td>
-          </tr>
-        </tbody>
-      </table>
-      ${renderPagination(currentPage, totalPages, total)}
-    </div>`;
+    html = `<div class="table-container"><table>
+      <thead><tr>
+        <th>顧客名</th>
+        <th class="num">報酬</th>
+        <th class="num">人件費</th>
+        <th class="num">損益</th>
+        <th class="num">利益率</th>
+        <th class="num" style="width:120px">損益グラフ</th>
+      </tr></thead>
+      <tbody>
+        ${page.map(d => {
+          const pct = Math.abs(d.損益) / maxVal * 50;
+          const isLoss = d.損益 < 0;
+          return `<tr>
+            <td class="name" onclick="showDetail('${d.id}')">${d.name}</td>
+            <td class="num">${fmt(d.報酬合計)}</td>
+            <td class="num">${fmt(d.人件費)}</td>
+            <td class="num ${isLoss?'loss':''}">${fmt(d.損益)}</td>
+            <td class="num">${d.利益率||''}${d.利益率?'%':''}</td>
+            <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill ${isLoss?'negative':'positive'}" style="width:${pct}px"></div></div></div></td>
+          </tr>`;
+        }).join('')}
+        <tr class="total-row">
+          <td>総計</td>
+          <td class="num">${fmt(sumHoshu)}</td>
+          <td class="num">${fmt(sumJinken)}</td>
+          <td class="num ${sumSoneki<0?'loss':''}">${fmt(sumSoneki)}</td>
+          <td class="num">${avgRieki}%</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>${renderPagination(currentPage, totalPages, total)}</div>`;
   } else {
-    html = `
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th style="width:70px">コード</th>
-            <th>顧客名</th>
-            <th class="num">報酬</th>
-            <th class="num">工数</th>
-            <th class="num" style="width:160px">時間あたり報酬</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${page.map(d => {
-            const pct = maxVal > 0 ? d.時間単価 / maxVal * 50 : 0;
-            return `<tr>
-              <td>${d.code || ''}</td>
-              <td class="name">${d.name}</td>
-              <td class="num">${fmt(d.報酬合計)}</td>
-              <td class="num">${d.工数 ? d.工数.toFixed(2) : ''}</td>
-              <td>
-                <div class="bar-cell">
-                  <div class="bar-wrap">
-                    <div class="bar-fill positive" style="width:${pct}px"></div>
-                  </div>
-                  <span>${fmt(d.時間単価)}</span>
-                </div>
-              </td>
-            </tr>`;
-          }).join('')}
-          <tr class="total-row">
-            <td colspan="2">総計</td>
-            <td class="num">${fmt(sumHoshu)}</td>
-            <td class="num">${sumKoshu.toFixed(2)}</td>
-            <td class="num">${fmt(avgJikan)}</td>
-          </tr>
-        </tbody>
-      </table>
-      ${renderPagination(currentPage, totalPages, total)}
-    </div>`;
+    html = `<div class="table-container"><table>
+      <thead><tr>
+        <th>顧客名</th>
+        <th class="num">報酬</th>
+        <th class="num">工数(h)</th>
+        <th class="num" style="width:160px">時間あたり報酬</th>
+      </tr></thead>
+      <tbody>
+        ${page.map(d => {
+          const pct = d.時間単価 / maxVal * 50;
+          return `<tr>
+            <td class="name" onclick="showDetail('${d.id}')">${d.name}</td>
+            <td class="num">${fmt(d.報酬合計)}</td>
+            <td class="num">${d.工数?d.工数.toFixed(2):''}</td>
+            <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill positive" style="width:${pct}px"></div></div><span>${fmt(d.時間単価)}</span></div></td>
+          </tr>`;
+        }).join('')}
+        <tr class="total-row">
+          <td>総計</td>
+          <td class="num">${fmt(sumHoshu)}</td>
+          <td class="num">${sumKoshu.toFixed(2)}</td>
+          <td class="num">${fmt(avgJikan)}</td>
+        </tr>
+      </tbody>
+    </table>${renderPagination(currentPage, totalPages, total)}</div>`;
   }
 
   document.getElementById('content').innerHTML = html;
+
+  // サマリー更新
+  const sf = getFiltered();
+  const sk = sf.reduce((s,d) => s+d.工数, 0);
+  const sh = sf.reduce((s,d) => s+d.報酬合計, 0);
+  const ss = sf.reduce((s,d) => s+d.損益, 0);
+  const st = sk > 0 ? Math.round(sh/sk) : 0;
+  document.getElementById('sum-koshu').textContent = sk.toFixed(2);
+  document.getElementById('sum-tanka').textContent = st.toLocaleString();
+  const sel = document.getElementById('sum-soneki');
+  sel.textContent = Math.round(ss).toLocaleString();
+  sel.style.color = ss < 0 ? '#d93025' : '#333';
+  document.getElementById('summary-cards').style.display = 'block';
 }
 
 function renderPagination(current, total, count) {
-  return `
-    <div class="pagination">
-      <span>${count}件</span>
-      <button class="page-btn" onclick="goPage(1)" ${current===1?'disabled':''}>«</button>
-      <button class="page-btn" onclick="goPage(${current-1})" ${current===1?'disabled':''}>‹</button>
-      <span>${current} / ${total}</span>
-      <button class="page-btn" onclick="goPage(${current+1})" ${current===total?'disabled':''}>›</button>
-      <button class="page-btn" onclick="goPage(${total})" ${current===total?'disabled':''}>»</button>
-    </div>`;
+  return `<div class="pagination">
+    <span>${count}件</span>
+    <button class="page-btn" onclick="goPage(1)" ${current===1?'disabled':''}>«</button>
+    <button class="page-btn" onclick="goPage(${current-1})" ${current===1?'disabled':''}>‹</button>
+    <span>${current} / ${total}</span>
+    <button class="page-btn" onclick="goPage(${current+1})" ${current===total?'disabled':''}>›</button>
+    <button class="page-btn" onclick="goPage(${total})" ${current===total?'disabled':''}>»</button>
+  </div>`;
 }
 
 function goPage(p) {
@@ -638,7 +487,71 @@ function goPage(p) {
   document.querySelector('.main').scrollTop = 0;
 }
 
-// 初期化
+function showDetail(id) {
+  const filtered = getFiltered();
+  const d = filtered.find(x => x.id === id);
+  if (!d) return;
+
+  document.getElementById('modal-title').textContent = d.name;
+  document.getElementById('modal-subtitle').textContent = `報酬合計: ${fmt(d.報酬合計)}円 ／ 工数合計: ${d.工数.toFixed(2)}h ／ 時間単価: ${fmt(d.時間単価)}円/h`;
+
+  const gyomuList = Object.entries(d.byGyomu).sort((a,b) => b[1]-a[1]);
+  const totalKoshu = gyomuList.reduce((s,[,v]) => s+v, 0);
+
+  let html = '';
+  if (gyomuList.length > 0) {
+    html += `<div class="modal-section">
+      <div class="modal-section-title">業務別工数</div>
+      <table class="detail-table">
+        <thead><tr>
+          <th>業務種別</th>
+          <th>工数(h)</th>
+          <th>構成比</th>
+          <th>人件費</th>
+        </tr></thead>
+        <tbody>
+          ${gyomuList.map(([g, h]) => `<tr>
+            <td>${g}</td>
+            <td>${h.toFixed(2)}</td>
+            <td>${totalKoshu > 0 ? Math.round(h/totalKoshu*100) : 0}%</td>
+            <td>${fmt(h * JIKEN_TANKA)}</td>
+          </tr>`).join('')}
+          <tr>
+            <td>合計</td>
+            <td>${totalKoshu.toFixed(2)}</td>
+            <td>100%</td>
+            <td>${fmt(totalKoshu * JIKEN_TANKA)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+  } else {
+    html += '<div class="modal-section"><p style="color:#666;font-size:12px">この期間の工数データがありません</p></div>';
+  }
+
+  html += `<div class="modal-section">
+    <div class="modal-section-title">採算サマリー</div>
+    <table class="detail-table">
+      <tbody>
+        <tr><td>年間報酬合計</td><td>${fmt(d.報酬合計)}円</td></tr>
+        <tr><td>人件費合計</td><td>${fmt(d.人件費)}円</td></tr>
+        <tr><td>損益</td><td style="color:${d.損益<0?'#d93025':'#333'}">${fmt(d.損益)}円</td></tr>
+        <tr><td>利益率</td><td>${d.利益率}%</td></tr>
+        <tr><td>時間単価</td><td>${fmt(d.時間単価)}円/h</td></tr>
+      </tbody>
+    </table>
+  </div>`;
+
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').classList.remove('show');
+  }
+}
+
 onPeriodChange();
 </script>
 </body>
