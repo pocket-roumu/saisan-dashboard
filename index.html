@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>採算管理 | 新宿パートナーズ</title>
+<title>工数管理 | 新宿パートナーズ</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
@@ -363,6 +363,7 @@ tr.total-row td {
     <div class="tab" onclick="switchTab('seisansei')" id="tab-seisansei">📈 生産性分析</div>
     <div class="tab" onclick="switchTab('member')" id="tab-member">👤 メンバー別</div>
   </div>
+  <button onclick="document.getElementById('hoshu-modal-overlay').classList.add('show')" style="margin-left:auto;background:var(--accent);color:#fff;border:none;border-radius:4px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">+ 報酬登録</button>
 </div>
 
 <div class="layout">
@@ -452,6 +453,47 @@ tr.total-row td {
   </div>
 </div>
 
+<!-- 報酬登録モーダル -->
+<div class="modal-overlay" id="hoshu-modal-overlay" onclick="closeHoshuModal(event)">
+  <div class="modal" style="width:480px">
+    <button class="modal-close" onclick="document.getElementById('hoshu-modal-overlay').classList.remove('show')">✕</button>
+    <div class="modal-title">報酬登録</div>
+    <div class="modal-subtitle">報酬DBに新しい顧客の報酬を登録します</div>
+    <div id="hoshu-form">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <div class="modal-section-title">顧客名（報酬DBの顧客名）</div>
+          <input type="text" id="hoshu-name" placeholder="例：合同会社ヒテラス" style="width:100%;margin-top:6px">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div class="modal-section-title">月額報酬</div>
+            <input type="number" id="hoshu-monthly" placeholder="30000" style="width:100%;margin-top:6px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;font-family:inherit;font-size:12px">
+          </div>
+          <div>
+            <div class="modal-section-title">決算時報酬</div>
+            <input type="number" id="hoshu-kessan" placeholder="120000" style="width:100%;margin-top:6px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;font-family:inherit;font-size:12px">
+          </div>
+          <div>
+            <div class="modal-section-title">確定申告報酬</div>
+            <input type="number" id="hoshu-kakutei" placeholder="0" style="width:100%;margin-top:6px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;font-family:inherit;font-size:12px">
+          </div>
+          <div>
+            <div class="modal-section-title">その他報酬</div>
+            <input type="number" id="hoshu-other" placeholder="0" style="width:100%;margin-top:6px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;font-family:inherit;font-size:12px">
+          </div>
+        </div>
+        <div>
+          <div class="modal-section-title">備考</div>
+          <input type="text" id="hoshu-memo" placeholder="備考（任意）" style="width:100%;margin-top:6px">
+        </div>
+        <div id="hoshu-result" style="font-size:12px;display:none"></div>
+        <button class="btn-calc" onclick="submitHoshu()" id="hoshu-submit-btn">Notionに登録</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 詳細モーダル -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
   <div class="modal">
@@ -472,6 +514,8 @@ let allData = [];
 let nippoRaw = [];
 let currentPage = 1;
 const PAGE_SIZE = 50;
+let sortKey = '時間単価';
+let sortDir = -1; // -1=降順, 1=昇順
 const JIKEN_TANKA = 10000;
 
 function switchTab(tab) {
@@ -637,7 +681,12 @@ function getFiltered() {
   const onlyData = document.getElementById('only-with-data').checked;
   const gyomu = getSelectedGyomu();
 
-  return allData.map(d => {
+  const sorted = allData.slice().sort((a, b) => {
+    const va = a[sortKey] ?? 0;
+    const vb = b[sortKey] ?? 0;
+    return sortDir * (vb - va);
+  });
+  return sorted.map(d => {
     let 工数 = d.工数;
     let byGyomu = d.byGyomu;
 
@@ -667,6 +716,22 @@ function getFiltered() {
   });
 }
 
+function setSort(key) {
+  if (sortKey === key) {
+    sortDir *= -1;
+  } else {
+    sortKey = key;
+    sortDir = -1;
+  }
+  currentPage = 1;
+  renderTable();
+}
+
+function sortIcon(key) {
+  if (sortKey !== key) return '<span style="color:#ccc">↕</span>';
+  return sortDir === -1 ? '↓' : '↑';
+}
+
 function renderTable() {
   const filtered = getFiltered();
   const total = filtered.length;
@@ -688,11 +753,11 @@ function renderTable() {
   if (currentTab === 'soneki') {
     html = `<div class="table-container"><table>
       <thead><tr>
-        <th>顧客名</th>
-        <th class="num">報酬</th>
-        <th class="num">人件費</th>
-        <th class="num">損益</th>
-        <th class="num">利益率</th>
+        <th onclick="setSort('name')" style="cursor:pointer">顧客名 ${sortIcon('name')}</th>
+        <th class="num" onclick="setSort('報酬合計')" style="cursor:pointer">報酬 ${sortIcon('報酬合計')}</th>
+        <th class="num" onclick="setSort('人件費')" style="cursor:pointer">人件費 ${sortIcon('人件費')}</th>
+        <th class="num" onclick="setSort('損益')" style="cursor:pointer">損益 ${sortIcon('損益')}</th>
+        <th class="num" onclick="setSort('利益率')" style="cursor:pointer">利益率 ${sortIcon('利益率')}</th>
         <th class="num" style="width:120px">損益グラフ</th>
       </tr></thead>
       <tbody>
@@ -721,10 +786,10 @@ function renderTable() {
   } else {
     html = `<div class="table-container"><table>
       <thead><tr>
-        <th>顧客名</th>
-        <th class="num">報酬</th>
-        <th class="num">工数(h)</th>
-        <th class="num" style="width:160px">時間あたり報酬</th>
+        <th onclick="setSort('name')" style="cursor:pointer">顧客名 ${sortIcon('name')}</th>
+        <th class="num" onclick="setSort('報酬合計')" style="cursor:pointer">報酬 ${sortIcon('報酬合計')}</th>
+        <th class="num" onclick="setSort('工数')" style="cursor:pointer">工数(h) ${sortIcon('工数')}</th>
+        <th class="num" onclick="setSort('時間単価')" style="cursor:pointer" style="width:160px">時間あたり報酬 ${sortIcon('時間単価')}</th>
       </tr></thead>
       <tbody>
         ${page.map(d => {
@@ -801,11 +866,12 @@ function renderTable() {
 
   document.getElementById('content').innerHTML = html;
 
-  // サマリー更新
+  // サマリー更新（工数がある顧客のみ）
   const sf = getFiltered();
-  const sk = sf.reduce((s,d) => s+d.工数, 0);
-  const sh = sf.reduce((s,d) => s+d.報酬合計, 0);
-  const ss = sf.reduce((s,d) => s+d.損益, 0);
+  const sfWithKoshu = sf.filter(d => d.工数 > 0);
+  const sk = sfWithKoshu.reduce((s,d) => s+d.工数, 0);
+  const sh = sfWithKoshu.reduce((s,d) => s+d.報酬合計, 0);
+  const ss = sfWithKoshu.reduce((s,d) => s+d.損益, 0);
   const st = sk > 0 ? Math.round(sh/sk) : 0;
   document.getElementById('sum-koshu').textContent = sk.toFixed(2);
   document.getElementById('sum-tanka').textContent = st.toLocaleString();
@@ -916,6 +982,69 @@ function closeModal(e) {
 }
 
 onPeriodChange();
+
+function closeHoshuModal(e) {
+  if (e.target === document.getElementById('hoshu-modal-overlay')) {
+    document.getElementById('hoshu-modal-overlay').classList.remove('show');
+  }
+}
+
+async function submitHoshu() {
+  const name = document.getElementById('hoshu-name').value.trim();
+  if (!name) { alert('顧客名を入力してください'); return; }
+  
+  const btn = document.getElementById('hoshu-submit-btn');
+  btn.disabled = true;
+  btn.textContent = '登録中...';
+  
+  const payload = {
+    parent: { database_id: 'b22821a235f34ed8b6364d3f5b80b8cc' },
+    properties: {
+      '顧客名': { title: [{ text: { content: name } }] },
+      '月額報酬': { number: parseInt(document.getElementById('hoshu-monthly').value) || 0 },
+      '決算時報酬': { number: parseInt(document.getElementById('hoshu-kessan').value) || 0 },
+      'R7確定申告報酬': { number: parseInt(document.getElementById('hoshu-kakutei').value) || 0 },
+      'その他報酬': { number: parseInt(document.getElementById('hoshu-other').value) || 0 },
+      '備考': { rich_text: [{ text: { content: document.getElementById('hoshu-memo').value || '' } }] }
+    }
+  };
+
+  try {
+    const res = await fetch(`${PROXY}/notion/pages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.id) {
+      const result = document.getElementById('hoshu-result');
+      result.style.display = 'block';
+      result.style.color = 'var(--green)';
+      result.textContent = '✅ Notionに登録しました！';
+      setTimeout(() => {
+        document.getElementById('hoshu-modal-overlay').classList.remove('show');
+        result.style.display = 'none';
+        btn.disabled = false;
+        btn.textContent = 'Notionに登録';
+        document.getElementById('hoshu-name').value = '';
+        document.getElementById('hoshu-monthly').value = '';
+        document.getElementById('hoshu-kessan').value = '';
+        document.getElementById('hoshu-kakutei').value = '';
+        document.getElementById('hoshu-other').value = '';
+        document.getElementById('hoshu-memo').value = '';
+      }, 2000);
+    } else {
+      throw new Error(data.message || '登録失敗');
+    }
+  } catch(e) {
+    const result = document.getElementById('hoshu-result');
+    result.style.display = 'block';
+    result.style.color = 'var(--red)';
+    result.textContent = 'エラー: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Notionに登録';
+  }
+}
 </script>
 </body>
 </html>
