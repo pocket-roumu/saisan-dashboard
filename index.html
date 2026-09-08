@@ -356,11 +356,12 @@ tr.total-row td {
 
 <div class="header">
   <div class="header-logo">
-    <img src="logo.png" alt="SHINJUKU PARTNERS">
+    <img src="https://pocket-roumu.github.io/saisan-dashboard/logo.png" alt="SHINJUKU PARTNERS" style="height:30px;width:auto">
   </div>
   <div style="display:flex;gap:0">
     <div class="tab active" onclick="switchTab('soneki')" id="tab-soneki">📊 損益分析</div>
     <div class="tab" onclick="switchTab('seisansei')" id="tab-seisansei">📈 生産性分析</div>
+    <div class="tab" onclick="switchTab('member')" id="tab-member">👤 メンバー別</div>
   </div>
 </div>
 
@@ -477,6 +478,7 @@ function switchTab(tab) {
   currentTab = tab;
   document.getElementById('tab-soneki').className = 'tab' + (tab === 'soneki' ? ' active' : '');
   document.getElementById('tab-seisansei').className = 'tab' + (tab === 'seisansei' ? ' active' : '');
+  document.getElementById('tab-member').className = 'tab' + (tab === 'member' ? ' active' : '');
   if (allData.length > 0) renderTable();
 }
 
@@ -565,6 +567,7 @@ async function loadData() {
     const fromLabel = range.from.slice(0,7).replace('-','年') + '月';
     const toLabel = range.to.slice(0,7).replace('-','年') + '月';
     document.getElementById('period-title').textContent = `${fromLabel}〜${toLabel}`;
+    window.currentRange = range;
 
     // 日報取得
     nippoRaw = await notionQuery(NIPPO_DB, {
@@ -741,6 +744,59 @@ function renderTable() {
         </tr>
       </tbody>
     </table>${renderPagination(currentPage, totalPages, total)}</div>`;
+  }
+
+  // メンバー別タブ
+  if (currentTab === 'member') {
+    const memberMap = {};
+    nippoRaw.forEach(page => {
+      const jikan = page.properties['時間']?.number ?? 0;
+      const gyomu = page.properties['作業種別']?.select?.name ?? 'その他';
+      const tantouArr = page.properties['担当者']?.people ?? [];
+      const tantou = tantouArr.map(p => p.name).join('・') || '未設定';
+      const dateStr = page.properties['日付']?.date?.start ?? '';
+      if (!dateStr) return;
+      const date = new Date(dateStr);
+      if (date < new Date(currentRange.from) || date > new Date(currentRange.to)) return;
+      if (!memberMap[tantou]) memberMap[tantou] = { total: 0, byGyomu: {} };
+      memberMap[tantou].total += jikan;
+      memberMap[tantou].byGyomu[gyomu] = (memberMap[tantou].byGyomu[gyomu] || 0) + jikan;
+    });
+
+    const members = Object.entries(memberMap).sort((a,b) => b[1].total - a[1].total);
+    const totalH = members.reduce((s,[,v]) => s + v.total, 0);
+    const maxH = Math.max(...members.map(([,v]) => v.total), 1);
+
+    html = `<div class="table-container"><table>
+      <thead><tr>
+        <th>メンバー</th>
+        <th class="num">工数合計(h)</th>
+        <th class="num">構成比</th>
+        <th class="num" style="width:200px">工数グラフ</th>
+        <th class="num">主な業務</th>
+      </tr></thead>
+      <tbody>
+        ${members.map(([name, data]) => {
+          const pct = data.total / maxH * 120;
+          const topGyomu = Object.entries(data.byGyomu).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([g,h])=>`${g}:${h.toFixed(1)}h`).join(' / ');
+          const ratio = totalH > 0 ? Math.round(data.total/totalH*100) : 0;
+          return `<tr>
+            <td style="font-weight:500">${name}</td>
+            <td class="num">${data.total.toFixed(2)}</td>
+            <td class="num">${ratio}%</td>
+            <td><div class="bar-cell"><div class="bar-wrap" style="width:120px"><div class="bar-fill positive" style="width:${pct}px"></div></div></div></td>
+            <td class="num" style="color:var(--text-muted);font-size:11px">${topGyomu}</td>
+          </tr>`;
+        }).join('')}
+        <tr class="total-row">
+          <td>合計</td>
+          <td class="num">${totalH.toFixed(2)}</td>
+          <td class="num">100%</td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table></div>`;
   }
 
   document.getElementById('content').innerHTML = html;
