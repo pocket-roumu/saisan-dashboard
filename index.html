@@ -3,77 +3,361 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>工数管理 | 新宿パートナーズ</title>
+<title>採算管理 | 新宿パートナーズ</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Hiragino Kaku Gothic Pro', 'Yu Gothic', sans-serif; background: #f5f5f5; color: #333; font-size: 13px; }
-.header { background: #fff; border-bottom: 1px solid #ddd; padding: 0 16px; display: flex; align-items: center; height: 40px; gap: 16px; }
-.tab { padding: 0 16px; height: 40px; display: flex; align-items: center; cursor: pointer; border-bottom: 2px solid transparent; color: #666; font-size: 13px; }
-.tab.active { border-bottom-color: #1a73e8; color: #1a73e8; }
-.tab:hover { background: #f8f8f8; }
-.layout { display: flex; height: calc(100vh - 40px); }
-.sidebar { width: 200px; min-width: 200px; background: #fff; border-right: 1px solid #ddd; padding: 16px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
-.sidebar-section label { display: block; font-size: 11px; color: #666; margin-bottom: 4px; font-weight: 600; }
-.radio-group { display: flex; flex-direction: column; gap: 4px; }
-.radio-group label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #333; font-weight: normal; cursor: pointer; }
-.date-range { display: flex; align-items: center; gap: 4px; font-size: 12px; }
-.date-range input { border: 1px solid #ddd; border-radius: 3px; padding: 3px 6px; font-size: 11px; width: 80px; }
-select { width: 100%; border: 1px solid #ddd; border-radius: 3px; padding: 4px 6px; font-size: 12px; background: #fff; }
-.checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #333; cursor: pointer; margin-top: 2px; }
-input[type="text"] { width: 100%; border: 1px solid #ddd; border-radius: 3px; padding: 4px 6px; font-size: 12px; }
-.btn-calc { background: #1a73e8; color: #fff; border: none; border-radius: 4px; padding: 8px; width: 100%; font-size: 13px; cursor: pointer; margin-top: 4px; }
-.btn-calc:hover { background: #1557b0; }
-.btn-calc:disabled { background: #aaa; cursor: not-allowed; }
-.main { flex: 1; overflow: auto; padding: 16px; }
-.period-title { font-size: 14px; font-weight: bold; margin-bottom: 12px; color: #333; }
-.table-container { background: #fff; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+
+:root {
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --border: #e4e4e0;
+  --border-light: #f0f0ec;
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --text-dim: #a0a09a;
+  --accent: #1a1a1a;
+  --red: #c0392b;
+  --blue: #2563eb;
+  --green: #16a34a;
+}
+
+body {
+  font-family: 'Inter', 'Hiragino Kaku Gothic Pro', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  height: 52px;
+  gap: 0;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  margin-right: 28px;
+}
+
+.header-logo img {
+  height: 28px;
+  width: auto;
+}
+
+.tab {
+  padding: 0 16px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.tab.active { border-bottom-color: var(--accent); color: var(--accent); }
+.tab:hover { color: var(--text); }
+
+.layout { display: flex; height: calc(100vh - 52px); }
+
+.sidebar {
+  width: 192px;
+  min-width: 192px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 16px 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sidebar-label {
+  display: block;
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.radio-group { display: flex; flex-direction: column; gap: 5px; }
+
+.radio-group label,
+.checkbox-group label,
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.radio-group label:hover,
+.checkbox-group label:hover,
+.checkbox-label:hover { color: var(--text); }
+
+input[type="radio"], input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 12px;
+  height: 12px;
+}
+
+.date-range { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+
+.date-range input,
+input[type="month"],
+input[type="text"],
+select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: inherit;
+  outline: none;
+}
+
+.date-range input { width: 76px; }
+input[type="text"], select { width: 100%; }
+
+.checkbox-group { display: flex; flex-direction: column; gap: 4px; }
+
+.btn-calc {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 9px;
+  width: 100%;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: opacity 0.15s;
+}
+
+.btn-calc:hover { opacity: 0.85; }
+.btn-calc:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.main { flex: 1; overflow: auto; padding: 20px 24px; }
+
+.period-title {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+/* サマリーカード */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 18px;
+}
+
+.summary-card-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.summary-card-value {
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.summary-card-unit {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* テーブル */
+.table-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
 table { width: 100%; border-collapse: collapse; font-size: 12px; }
-th { background: #f8f8f8; padding: 8px 10px; text-align: left; border-bottom: 1px solid #ddd; border-right: 1px solid #eee; font-weight: 600; color: #555; white-space: nowrap; cursor: pointer; user-select: none; }
+
+th {
+  background: var(--bg);
+  padding: 9px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  font-size: 11px;
+}
+
 th.num { text-align: right; }
-td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; border-right: 1px solid #f5f5f5; white-space: nowrap; }
-td.num { text-align: right; }
-td.name { color: #1a73e8; cursor: pointer; }
+th:hover { color: var(--text); }
+
+td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-light);
+  white-space: nowrap;
+  color: var(--text);
+}
+
+td.num { text-align: right; color: var(--text-muted); }
+td.name { color: var(--blue); cursor: pointer; }
 td.name:hover { text-decoration: underline; }
-tr:hover td { background: #f8f9ff; }
-tr.total-row td { background: #f8f8f8; font-weight: bold; border-top: 2px solid #ddd; }
-.loss { color: #d93025; font-weight: bold; }
-.bar-cell { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
-.bar-wrap { width: 50px; height: 8px; background: #eee; border-radius: 2px; overflow: hidden; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafafa; }
+
+tr.total-row td {
+  background: var(--bg);
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+  color: var(--text);
+}
+
+.loss { color: var(--red) !important; font-weight: 500; }
+.low-tanka { color: var(--red) !important; }
+
+.bar-cell { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.bar-wrap { width: 48px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 2px; }
-.bar-fill.positive { background: #1a73e8; }
-.bar-fill.negative { background: #d93025; }
-.pagination { display: flex; align-items: center; justify-content: flex-end; gap: 4px; padding: 8px 10px; background: #f8f8f8; border-top: 1px solid #ddd; font-size: 12px; }
-.page-btn { border: 1px solid #ddd; background: #fff; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; }
-.page-btn:disabled { color: #aaa; cursor: not-allowed; }
-.page-btn:hover:not(:disabled) { background: #f0f0f0; }
-.loading { text-align: center; padding: 48px; color: #666; }
-.error-msg { background: #fce8e6; border: 1px solid #f28b82; color: #c5221f; padding: 10px 14px; border-radius: 4px; margin-bottom: 12px; font-size: 12px; }
+.bar-fill.positive { background: var(--blue); }
+.bar-fill.negative { background: var(--red); }
 
-/* モーダル */
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.page-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  padding: 3px 9px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: inherit;
+}
+
+.page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.page-btn:hover:not(:disabled) { background: var(--bg); color: var(--text); }
+
+.loading { text-align: center; padding: 60px; color: var(--text-dim); font-size: 13px; }
+
+.error-msg {
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  color: var(--red);
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
 .modal-overlay.show { display: flex; }
-.modal { background: #fff; border-radius: 8px; padding: 24px; width: 700px; max-width: 90vw; max-height: 80vh; overflow-y: auto; position: relative; }
-.modal-title { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
-.modal-subtitle { font-size: 12px; color: #666; margin-bottom: 16px; }
-.modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; }
-.modal-close:hover { color: #333; }
-.modal-section { margin-bottom: 20px; }
-.modal-section-title { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #eee; }
-.detail-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.detail-table th { background: #f8f8f8; padding: 6px 10px; text-align: right; font-weight: 600; color: #555; border-bottom: 1px solid #ddd; }
-.detail-table th:first-child { text-align: left; }
-.detail-table td { padding: 6px 10px; text-align: right; border-bottom: 1px solid #f0f0f0; }
-.detail-table td:first-child { text-align: left; }
-.detail-table tr:last-child td { font-weight: bold; background: #f8f8f8; border-top: 1px solid #ddd; }
 
-/* 業務分類チェックボックス */
-.checkbox-group { display: flex; flex-direction: column; gap: 3px; }
-.checkbox-group label { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #333; cursor: pointer; font-weight: normal; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  width: 680px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+.modal-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.modal-subtitle { font-size: 11px; color: var(--text-muted); margin-bottom: 20px; }
+
+.modal-close {
+  position: absolute; top: 16px; right: 16px;
+  background: none; border: none;
+  font-size: 16px; cursor: pointer;
+  color: var(--text-muted);
+}
+
+.modal-close:hover { color: var(--text); }
+.modal-section { margin-bottom: 20px; }
+
+.modal-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.detail-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.detail-table th { background: var(--bg); padding: 7px 10px; text-align: right; font-weight: 500; color: var(--text-muted); border-bottom: 1px solid var(--border); cursor: default; }
+.detail-table th:first-child { text-align: left; }
+.detail-table td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--border-light); color: var(--text-muted); }
+.detail-table td:first-child { text-align: left; color: var(--text); }
+.detail-table tr:last-child td { font-weight: 600; background: var(--bg); border-top: 1px solid var(--border); color: var(--text); }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 </style>
 </head>
 <body>
 
 <div class="header">
+  <div class="header-logo">
+    <img src="logo.png" alt="SHINJUKU PARTNERS">
+  </div>
   <div style="display:flex;gap:0">
     <div class="tab active" onclick="switchTab('soneki')" id="tab-soneki">📊 損益分析</div>
     <div class="tab" onclick="switchTab('seisansei')" id="tab-seisansei">📈 生産性分析</div>
@@ -83,7 +367,7 @@ tr.total-row td { background: #f8f8f8; font-weight: bold; border-top: 2px solid 
 <div class="layout">
   <div class="sidebar">
     <div class="sidebar-section">
-      <label>期間</label>
+      <span class="sidebar-label">期間</span>
       <div class="radio-group">
         <label><input type="radio" name="period" value="prev" onchange="onPeriodChange()"> 前月</label>
         <label><input type="radio" name="period" value="year" checked onchange="onPeriodChange()"> 直近1年</label>
@@ -95,7 +379,7 @@ tr.total-row td { background: #f8f8f8; font-weight: bold; border-top: 2px solid 
     </div>
 
     <div class="sidebar-section">
-      <label>業務分類</label>
+      <span class="sidebar-label">業務分類</span>
       <div class="checkbox-group" id="gyomu-checks">
         <label><input type="checkbox" value="すべて" checked onchange="onGyomuAll(this)"> すべて</label>
         <label><input type="checkbox" value="法人決算" onchange="onGyomuChange()"> 法人決算</label>
@@ -114,7 +398,7 @@ tr.total-row td { background: #f8f8f8; font-weight: bold; border-top: 2px solid 
     </div>
 
     <div class="sidebar-section">
-      <label>決算月</label>
+      <span class="sidebar-label">決算月</span>
       <select id="filter-month">
         <option value="">すべて</option>
         <option value="1">1月</option><option value="2">2月</option>
@@ -127,14 +411,14 @@ tr.total-row td { background: #f8f8f8; font-weight: bold; border-top: 2px solid 
     </div>
 
     <div class="sidebar-section">
-      <label>キーワード</label>
+      <span class="sidebar-label">キーワード</span>
       <input type="text" id="filter-keyword" placeholder="キーワード検索">
     </div>
 
     <div class="sidebar-section">
-      <label>オプション</label>
+      <span class="sidebar-label">オプション</span>
       <label class="checkbox-label">
-        <input type="checkbox" id="only-with-data"> 報酬または工数がある行のみ
+        <input type="checkbox" id="only-with-data" checked> 報酬または工数がある行のみ
       </label>
     </div>
 
@@ -144,22 +428,22 @@ tr.total-row td { background: #f8f8f8; font-weight: bold; border-top: 2px solid 
   <div class="main">
     <div id="error-area"></div>
     <div class="period-title" id="period-title"></div>
-    <div id="summary-cards" style="display:none;margin-bottom:16px">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-        <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:16px">
-          <div style="font-size:11px;color:#666;margin-bottom:6px">工数合計</div>
-          <div style="font-size:22px;font-weight:700" id="sum-koshu">—</div>
-          <div style="font-size:11px;color:#666;margin-top:4px">h</div>
+    <div id="summary-cards" style="display:none">
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-card-label">工数合計</div>
+          <div class="summary-card-value" id="sum-koshu">—</div>
+          <div class="summary-card-unit">h</div>
         </div>
-        <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:16px">
-          <div style="font-size:11px;color:#666;margin-bottom:6px">時間単価（平均）</div>
-          <div style="font-size:22px;font-weight:700" id="sum-tanka">—</div>
-          <div style="font-size:11px;color:#666;margin-top:4px">円/h</div>
+        <div class="summary-card">
+          <div class="summary-card-label">時間単価（平均）</div>
+          <div class="summary-card-value" id="sum-tanka">—</div>
+          <div class="summary-card-unit">円 / h</div>
         </div>
-        <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:16px">
-          <div style="font-size:11px;color:#666;margin-bottom:6px">損益合計</div>
-          <div style="font-size:22px;font-weight:700" id="sum-soneki">—</div>
-          <div style="font-size:11px;color:#666;margin-top:4px">円</div>
+        <div class="summary-card">
+          <div class="summary-card-label">損益合計</div>
+          <div class="summary-card-value" id="sum-soneki">—</div>
+          <div class="summary-card-unit">円</div>
         </div>
       </div>
     </div>
@@ -186,7 +470,7 @@ let currentTab = 'soneki';
 let allData = [];
 let nippoRaw = [];
 let currentPage = 1;
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50;
 const JIKEN_TANKA = 10000;
 
 function switchTab(tab) {
@@ -298,11 +582,14 @@ async function loadData() {
       const rel = page.properties['顧客名']?.relation;
       const jikan = page.properties['時間']?.number ?? 0;
       const gyomu = page.properties['作業種別']?.select?.name ?? 'その他';
+      const tantouArr = page.properties['担当者']?.people ?? [];
+      const tantou = tantouArr.map(p => p.name).join('・') || '未設定';
       if (rel && rel.length > 0) {
         const id = rel[0].id;
-        if (!koshuMap[id]) koshuMap[id] = { total: 0, byGyomu: {} };
+        if (!koshuMap[id]) koshuMap[id] = { total: 0, byGyomu: {}, byTantou: {} };
         koshuMap[id].total += jikan;
         koshuMap[id].byGyomu[gyomu] = (koshuMap[id].byGyomu[gyomu] || 0) + jikan;
+        koshuMap[id].byTantou[tantou] = (koshuMap[id].byTantou[tantou] || 0) + jikan;
       }
     });
 
@@ -311,21 +598,23 @@ async function loadData() {
 
     allData = hoshuRows.map(page => {
       const p = page.properties;
-      const name = p['顧客名']?.title?.[0]?.plain_text ?? '';
+      const rawName = p['顧客名']?.title?.[0]?.plain_text ?? '';
+      const name = rawName.includes('（') ? rawName.split('（')[0].trim() : rawName;
       const 月額 = p['月額報酬']?.number ?? 0;
       const 決算 = p['決算時報酬']?.number ?? 0;
       const 確定 = p['R7確定申告報酬']?.number ?? 0;
       const その他 = p['その他報酬']?.number ?? 0;
       const 報酬合計 = 月額 * 12 + 決算 + 確定 + その他;
-      const 申告月 = p['申告月']?.rollup?.array?.[0]?.formula?.number ?? null;
-      const k = koshuMap[page.id] || { total: 0, byGyomu: {} };
+      const 申告月 = p['決算月']?.rollup?.array?.[0]?.formula?.number ?? null;
+      const k = koshuMap[page.id] || { total: 0, byGyomu: {}, byTantou: {} };
       const 工数 = k.total;
       const byGyomu = k.byGyomu;
+      const byTantou = k.byTantou;
       const 人件費 = 工数 * JIKEN_TANKA;
       const 損益 = 報酬合計 - 人件費;
       const 利益率 = 報酬合計 > 0 ? Math.round(損益 / 報酬合計 * 100 * 10) / 10 : 0;
       const 時間単価 = 工数 > 0 ? Math.round(報酬合計 / 工数) : 0;
-      return { id: page.id, name, 報酬合計, 申告月, 工数, byGyomu, 人件費, 損益, 利益率, 時間単価 };
+      return { id: page.id, name, 報酬合計, 申告月, 工数, byGyomu, byTantou, 人件費, 損益, 利益率, 時間単価 };
     }).filter(d => d.name);
 
     currentPage = 1;
@@ -366,7 +655,7 @@ function getFiltered() {
     const 利益率 = d.報酬合計 > 0 ? Math.round(損益 / d.報酬合計 * 100 * 10) / 10 : 0;
     const 時間単価 = 工数 > 0 ? Math.round(d.報酬合計 / 工数) : 0;
 
-    return { ...d, 工数, byGyomu, 人件費, 損益, 利益率, 時間単価 };
+    return { ...d, 工数, byGyomu, byTantou: d.byTantou, 人件費, 損益, 利益率, 時間単価 };
   }).filter(d => {
     if (keyword && !d.name.toLowerCase().includes(keyword)) return false;
     if (month && d.申告月 != month) return false;
@@ -441,7 +730,7 @@ function renderTable() {
             <td class="name" onclick="showDetail('${d.id}')">${d.name}</td>
             <td class="num">${fmt(d.報酬合計)}</td>
             <td class="num">${d.工数?d.工数.toFixed(2):''}</td>
-            <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill positive" style="width:${pct}px"></div></div><span>${fmt(d.時間単価)}</span></div></td>
+            <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill ${d.時間単価 < 10000 ? 'negative' : 'positive'}" style="width:${pct}px"></div></div><span class="${d.時間単価 > 0 && d.時間単価 < 10000 ? 'low-tanka' : ''}">${fmt(d.時間単価)}</span></div></td>
           </tr>`;
         }).join('')}
         <tr class="total-row">
@@ -527,6 +816,24 @@ function showDetail(id) {
     </div>`;
   } else {
     html += '<div class="modal-section"><p style="color:#666;font-size:12px">この期間の工数データがありません</p></div>';
+  }
+
+  // 担当者別工数テーブル
+  const tantouList = Object.entries(d.byTantou || {}).sort((a,b) => b[1]-a[1]);
+  if (tantouList.length > 0) {
+    html += `<div class="modal-section">
+      <div class="modal-section-title">担当者別工数</div>
+      <table class="detail-table">
+        <thead><tr><th>担当者</th><th>工数(h)</th><th>構成比</th></tr></thead>
+        <tbody>
+          ${tantouList.map(([t, h]) => `<tr>
+            <td>${t}</td>
+            <td>${h.toFixed(2)}</td>
+            <td>${d.工数 > 0 ? Math.round(h/d.工数*100) : 0}%</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
   }
 
   html += `<div class="modal-section">
