@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>採算管理 | 新宿パートナーズ</title>
+<title>工数管理 | 新宿パートナーズ</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
@@ -776,53 +776,110 @@ function renderTable() {
 
   // メンバー別タブ
   if (currentTab === 'member') {
-    const memberMap = {};
+    // 顧客ごとの全工数マップを作成
+    const kokyakuTotalKoshu = {}; // { hoshuPageId: 全工数 }
+    const memberKokyakuKoshu = {}; // { member: { hoshuPageId: 工数 } }
+
     nippoRaw.forEach(page => {
       const jikan = page.properties['時間']?.number ?? 0;
       const gyomu = page.properties['作業種別']?.select?.name ?? 'その他';
       const tantouArr = page.properties['担当者']?.people ?? [];
       const tantou = tantouArr.map(p => p.name).join('・') || '未設定';
       const dateStr = page.properties['日付']?.date?.start ?? '';
-      if (!dateStr) return;
+      const rel = page.properties['顧客名']?.relation;
+      if (!dateStr || !rel || rel.length === 0) return;
       const date = new Date(dateStr);
       if (date < new Date(currentRange.from) || date > new Date(currentRange.to)) return;
-      if (!memberMap[tantou]) memberMap[tantou] = { total: 0, byGyomu: {} };
-      memberMap[tantou].total += jikan;
-      memberMap[tantou].byGyomu[gyomu] = (memberMap[tantou].byGyomu[gyomu] || 0) + jikan;
+      const kokyakuId = rel[0].id;
+      const jikanNum = jikan || 0;
+
+      // 顧客ごと全工数
+      kokyakuTotalKoshu[kokyakuId] = (kokyakuTotalKoshu[kokyakuId] || 0) + jikanNum;
+
+      // メンバー×顧客の工数
+      if (!memberKokyakuKoshu[tantou]) memberKokyakuKoshu[tantou] = {};
+      memberKokyakuKoshu[tantou][kokyakuId] = (memberKokyakuKoshu[tantou][kokyakuId] || 0) + jikanNum;
     });
 
-    const members = Object.entries(memberMap).sort((a,b) => b[1].total - a[1].total);
-    const totalH = members.reduce((s,[,v]) => s + v.total, 0);
-    const maxH = Math.max(...members.map(([,v]) => v.total), 1);
+    // 顧客の報酬マップ
+    const kokyakuHoshu = {};
+    allData.forEach(d => { kokyakuHoshu[d.id] = d.報酬合計; });
+
+    // メンバーごとに按分報酬を計算
+    const memberStats = {};
+    Object.entries(memberKokyakuKoshu).forEach(([member, kokyakuMap]) => {
+      let totalKoshu = 0;
+      let anbuHoshu = 0;
+      let kokyakuCount = 0;
+      const byGyomu = {};
+
+      Object.entries(kokyakuMap).forEach(([kokyakuId, koshu]) => {
+        totalKoshu += koshu;
+        const totalK = kokyakuTotalKoshu[kokyakuId] || 1;
+        const hoshu = kokyakuHoshu[kokyakuId] || 0;
+        anbuHoshu += hoshu * (koshu / totalK);
+        kokyakuCount++;
+      });
+
+      // 業務別工数
+      nippoRaw.forEach(page => {
+        const tantouArr = page.properties['担当者']?.people ?? [];
+        const tantou = tantouArr.map(p => p.name).join('・') || '未設定';
+        if (tantou !== member) return;
+        const dateStr = page.properties['日付']?.date?.start ?? '';
+        if (!dateStr) return;
+        const date = new Date(dateStr);
+        if (date < new Date(currentRange.from) || date > new Date(currentRange.to)) return;
+        const gyomu = page.properties['作業種別']?.select?.name ?? 'その他';
+        const jikan = page.properties['時間']?.number ?? 0;
+        byGyomu[gyomu] = (byGyomu[gyomu] || 0) + jikan;
+      });
+
+      const jinken = totalKoshu * JIKEN_TANKA;
+      const soneki = anbuHoshu - jinken;
+      const rieki = anbuHoshu > 0 ? Math.round(soneki / anbuHoshu * 100 * 10) / 10 : 0;
+      const jikanTanka = totalKoshu > 0 ? Math.round(anbuHoshu / totalKoshu) : 0;
+
+      memberStats[member] = { totalKoshu, anbuHoshu, kokyakuCount, jinken, soneki, rieki, jikanTanka, byGyomu };
+    });
+
+    const members = Object.entries(memberStats).sort((a,b) => b[1].jikanTanka - a[1].jikanTanka);
+    const maxTanka = Math.max(...members.map(([,v]) => v.jikanTanka), 1);
 
     html = `<div class="table-container"><table>
       <thead><tr>
         <th>メンバー</th>
-        <th class="num">工数合計(h)</th>
-        <th class="num">構成比</th>
-        <th class="num" style="width:200px">工数グラフ</th>
-        <th class="num">主な業務</th>
+        <th class="num">工数(h)</th>
+        <th class="num">担当顧客数</th>
+        <th class="num">按分報酬</th>
+        <th class="num">人件費</th>
+        <th class="num">按分損益</th>
+        <th class="num">利益率</th>
+        <th class="num" style="width:160px">時間単価</th>
       </tr></thead>
       <tbody>
-        ${members.map(([name, data]) => {
-          const pct = data.total / maxH * 120;
-          const topGyomu = Object.entries(data.byGyomu).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([g,h])=>`${g}:${h.toFixed(1)}h`).join(' / ');
-          const ratio = totalH > 0 ? Math.round(data.total/totalH*100) : 0;
+        ${members.map(([name, d]) => {
+          const pct = d.jikanTanka / maxTanka * 80;
+          const isLoss = d.soneki < 0;
+          const isLowTanka = d.jikanTanka > 0 && d.jikanTanka < 10000;
           return `<tr>
-            <td style="font-weight:500">${name}</td>
-            <td class="num">${data.total.toFixed(2)}</td>
-            <td class="num">${ratio}%</td>
-            <td><div class="bar-cell"><div class="bar-wrap" style="width:120px"><div class="bar-fill positive" style="width:${pct}px"></div></div></div></td>
-            <td class="num" style="color:var(--text-muted);font-size:11px">${topGyomu}</td>
+            <td style="font-weight:500;cursor:pointer;color:var(--blue)" onclick="showMemberDetail('${name}', ${JSON.stringify(d.byGyomu).replace(/'/g, "\'")})">${name}</td>
+            <td class="num">${d.totalKoshu.toFixed(2)}</td>
+            <td class="num">${d.kokyakuCount}</td>
+            <td class="num">${fmt(d.anbuHoshu)}</td>
+            <td class="num">${fmt(d.jinken)}</td>
+            <td class="num ${isLoss ? 'loss' : ''}">${fmt(d.soneki)}</td>
+            <td class="num ${isLoss ? 'loss' : ''}">${d.rieki}%</td>
+            <td>
+              <div class="bar-cell">
+                <div class="bar-wrap" style="width:80px">
+                  <div class="bar-fill ${isLowTanka ? 'negative' : 'positive'}" style="width:${pct}px"></div>
+                </div>
+                <span class="${isLowTanka ? 'low-tanka' : ''}">${fmt(d.jikanTanka)}</span>
+              </div>
+            </td>
           </tr>`;
         }).join('')}
-        <tr class="total-row">
-          <td>合計</td>
-          <td class="num">${totalH.toFixed(2)}</td>
-          <td class="num">100%</td>
-          <td></td>
-          <td></td>
-        </tr>
       </tbody>
     </table></div>`;
   }
@@ -966,6 +1023,32 @@ function showDetail(id) {
         <tr><td>現在の報酬</td><td>${fmt(d.報酬合計)}円</td></tr>
         <tr><td>乖離</td><td id="sim-diff-${d.id}" style="font-weight:600">${fmt(d.報酬合計 - 10000 * d.工数)}円</td></tr>
         <tr><td>現在報酬での許容工数</td><td id="sim-허용-${d.id}">${d.工数 > 0 ? Math.round(d.報酬合計 / 10000 * 10) / 10 : '—'}h</td></tr>
+      </tbody>
+    </table>
+  </div>`;
+
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function showMemberDetail(name, byGyomu) {
+  document.getElementById('modal-title').textContent = name;
+  document.getElementById('modal-subtitle').textContent = 'メンバー別業務工数内訳';
+
+  const gyomuList = Object.entries(byGyomu).sort((a,b) => b[1]-a[1]);
+  const totalH = gyomuList.reduce((s,[,v]) => s+v, 0);
+
+  let html = `<div class="modal-section">
+    <div class="modal-section-title">業務別工数</div>
+    <table class="detail-table">
+      <thead><tr><th>業務種別</th><th>工数(h)</th><th>構成比</th></tr></thead>
+      <tbody>
+        ${gyomuList.map(([g,h]) => `<tr>
+          <td>${g}</td>
+          <td>${h.toFixed(2)}</td>
+          <td>${totalH > 0 ? Math.round(h/totalH*100) : 0}%</td>
+        </tr>`).join('')}
+        <tr><td>合計</td><td>${totalH.toFixed(2)}</td><td>100%</td></tr>
       </tbody>
     </table>
   </div>`;
